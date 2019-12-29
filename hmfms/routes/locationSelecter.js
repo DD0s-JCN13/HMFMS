@@ -68,11 +68,7 @@ router.post('/searchByLoc',function(req,res,next){
 
 
 router.post('/DeleteLoc',function(req,res,next){
-  //console.log("here is deleteLoc");
-  var LocId = req.body['LocID'];
-  var sqlDelete = "update location_info "+
-  "set isdc = 1 "+
-  " where locid = '"+LocId+"'";
+  console.log("here is deleteLoc");
   if(connStatus == 0){
     conn.connect(function(err){
       if(err) throw err;
@@ -81,12 +77,17 @@ router.post('/DeleteLoc',function(req,res,next){
       console.log(connStatus);
       });
   }
-
-  conn.query(sqlDelete,function(err,rows){
+  var locID = req['LocID'];
+  var sql = "update location_info "+
+  "set isdc = 1"+
+  " where locID = '"+locID+"'";
+  conn.query(sql,function(err,rows){
+    console.log(rows);
     if(err){
       console.log(err);
     }else{
-      res.send(true);
+      res.json(rows);
+      //res.end();
     }
   })
 });
