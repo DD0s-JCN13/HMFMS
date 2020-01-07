@@ -15,7 +15,7 @@
   </head>
   <body>
     <img src = "images/homeTitlePicture.jpg" id="homeTitlePicture">
-    <ul style="margin-bottom: 2px;">
+    <ul style="margin-bottom: 1px;">
         <li><a class="active" href="#home">HMFMSystem</a></li>
         <li><a href="/">設備查詢</a></li>
         <li><a href="">地點查詢</a></li>
@@ -70,14 +70,17 @@
     
 
         <div class="form-btn">
-
+            <button type="submit" class="btn btn-default" id="selectByLocERR_btn">異常地點查詢</button>
             <button class="btn btn-danger" id="clean_btn">清除</button>
-            <button type="submit" value="submit" class="btn btn-primary" id="selectByLoc_btn">查詢</button>
+            <button type="submit" class="btn btn-primary" id="selectByLoc_btn">查詢</button>
         </div>
         
 </div>
 <hr id="underline" class="style-one" />
 <div id="data_grid" class="col-12" style="margin: 10%;margin-top: 3%;"></div>
+<div class="uk-card  uk-text-left" id="objList_window" style="display:none">
+    <div id="record_grid"></div>
+</div>
 </body>
 <script>
 $(document).ready(function(){
@@ -117,6 +120,14 @@ $(document).ready(function(){
           ],
           sortable:true
   }); */
+
+  $("#objList_window").kendoWindow({
+            title: "設備清單",
+            width: "50%",
+            visible: false,
+            modal: true,
+            action: ["Close"]
+        });
 });
 
 var gridCount = 0;
@@ -165,9 +176,71 @@ $("#selectByLoc_btn").click(function(){
                   {field:"LocID",title:"地點編號",width:"10%"},
                   {field:"BName",title:"館別",width:"10%"},
                   {field:"LocFloor",title:"樓層",width:"10%"},
-                  {field:"LocName",title:"地點名稱",width:"25%"},
+                  {field:"LocName",title:"地點名稱",width:"15%"},
                   {field:"isDC",title:"狀態",width:"10%"},
-                  { command: { text: "廢除",click:deleteLoc,className:"distory-btn"}, title: " ", width: "10%" },
+                  { command: { text: "設備清單",click:objList}, title: " ", width: "10%" },
+                  { command: { text: "廢除",click:deleteLoc,className:"distory-btn"}, title: " ", width: "10%" }
+
+          ],
+          sortable:true,
+          scrollable: true,
+                        sortable: true,
+                        pageable: {
+                            input: true,
+                            numeric: false
+                        },
+  });
+});
+
+$("#selectByLocERR_btn").click(function(){
+        if (gridCount != 0) {
+            $("#data_grid").data('kendoGrid').destroy();
+        }
+        gridCount++;
+
+        $("#select").toggle(300);
+        $("#underline").toggle(300);
+        var params2 = {
+                "LocID" : $("#locid_inputer").val(),
+                "BID" : $("#bid").val(),
+                "LocFloor" : $("#bfloor").val(),
+                "isDC" : $("#isDiscard").val()
+                
+        };
+
+
+        $("#data_grid").kendoGrid({
+          dataSource:{
+            transport: {
+                    read: {
+                        method: "post",
+                        url: "locationSelecter/searchByLocERR",
+                        dataType: "json",
+                        data: params2
+                    }
+                },
+                schema: {
+                    model: {
+                        fields: {
+                            LocID: { type: "int" },
+                            LocName: { type: "string" },
+                            BName: { type: "string" },
+                            LocFloor: { type: "string" },
+                            isDC: {type: "string"}
+                        }
+                    }
+                },
+                pageSize: 20,
+            },
+          height:600,
+          columns:[
+                  {field:"LocID",title:"地點編號",width:"10%"},
+                  {field:"BName",title:"館別",width:"10%"},
+                  {field:"LocFloor",title:"樓層",width:"10%"},
+                  {field:"LocName",title:"地點名稱",width:"15%"},
+                  {field:"isDC",title:"狀態",width:"10%"},
+                  { command: { text: "設備清單",click:objList}, title: " ", width: "10%" },
+                  { command: { text: "廢除",click:deleteLoc,className:"distory-btn"}, title: " ", width: "10%" }
 
           ],
           sortable:true,
@@ -191,12 +264,57 @@ function deleteLoc(e) {
                 data: { "LocID": loc.LocID },
                 dataType: "json",
             }).done(function (e) {
-                if (e == true) $("#data_grid").data("kendoGrid").params.read();
+                if (e == true) $("#data_grid").data("kendoGrid").dataSource.read();
             })
 
         } else 
         return false;
     }
+
+function objList(e){
+    e.preventDefault();
+        var loc = this.dataItem($(e.currentTarget).closest("tr"));
+        $("#record_grid").kendoGrid({
+            dataSource: {
+                transport: {
+                    read: {
+                        method: "post",
+                        url: "locationSelecter/objList",
+                        dataType: "json",
+                        data: { "LocId": loc.LocID}
+                    }
+                },
+                schema: {
+                    model: {
+                        fields: {
+                            OID: { type: "int" },
+                            ObjectType: { type: "string" },
+                            TypeSpec: { type: "string" },
+                            checkStituation: { type: "string" },
+                            CheckDate: { type: "string" },
+                        }
+                    }
+                },
+                pageSize: 20,
+            },
+            height: 550,
+            sortable: true,
+            pageable: {
+                input: true,
+                numeric: false
+            },
+            columns: [
+                { field: "OID", title: "編號", width: "10%" },
+                { field: "ObjectType", title: "型號", width: "20%" },
+                { field: "TypeSpec", title: "規格", width: "20%" },
+                { field: "CheckDate", title: "檢查日期", width: "20%" },
+                { field: "checkStituation", title: "狀態", width: "20%" }
+            ]
+
+        });
+
+        $('#objList_window').data("kendoWindow").center().open();
+}
 </script>
 <style>
     .distory-btn{
